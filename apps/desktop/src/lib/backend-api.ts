@@ -1,6 +1,11 @@
 import type { ScUser, Track } from "./api";
 
-const BASE_URL = "http://127.0.0.1:3001";
+// Прод-бэкенд на VPS, за nginx с TLS — см. план, раздел про бэкенд.
+// API_KEY зашит здесь же (не секрет уровня "приватный ключ пользователя" —
+// общий пароль для доступа к самому сервису, аналог того, что уже сделано
+// для Discord client_id).
+const BASE_URL = "https://soundrain-api.botyfi.online";
+const API_KEY = "-lomIz12lEv8e32dpLUeEbt4PUd-fnZj1LgpTf4LH6k";
 
 export interface UserIdentity {
   scUserId: string;
@@ -21,7 +26,7 @@ export interface PlaybackStateDto {
 async function get<T>(path: string, params: Record<string, string>): Promise<T> {
   const url = new URL(path, BASE_URL);
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: { "X-Api-Key": API_KEY } });
   if (!res.ok) throw new Error(`backend GET ${path} -> ${res.status}`);
   return res.json();
 }
@@ -29,7 +34,7 @@ async function get<T>(path: string, params: Record<string, string>): Promise<T> 
 async function put(path: string, body: unknown): Promise<void> {
   const res = await fetch(new URL(path, BASE_URL), {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`backend PUT ${path} -> ${res.status}`);
@@ -38,7 +43,7 @@ async function put(path: string, body: unknown): Promise<void> {
 async function del(path: string, params: Record<string, string>): Promise<void> {
   const url = new URL(path, BASE_URL);
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
-  const res = await fetch(url, { method: "DELETE" });
+  const res = await fetch(url, { method: "DELETE", headers: { "X-Api-Key": API_KEY } });
   if (!res.ok) throw new Error(`backend DELETE ${path} -> ${res.status}`);
 }
 
