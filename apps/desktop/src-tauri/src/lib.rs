@@ -72,6 +72,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             auth::auth_status,
             auth::auth_set_token,
+            auth::auth_start_oauth_login,
             auth::auth_logout,
             soundcloud::sc_stream,
             soundcloud::sc_likes,

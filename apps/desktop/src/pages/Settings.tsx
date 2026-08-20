@@ -15,7 +15,7 @@ import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { applyBackground, clearBackground } from "../lib/background";
 import { formatBytes } from "../lib/formatters";
-import { type DiscordMode, useSettingsStore } from "../stores/settings";
+import { DEFAULT_PROXY_URL, type DiscordMode, useSettingsStore } from "../stores/settings";
 
 /**
  * Группы слева — по референсу `settings.png` (пользователь прислал в корень
@@ -335,14 +335,20 @@ function StorageSection() {
   );
 }
 
-type NetworkMode = "direct" | "proxy" | "zapret";
+type NetworkMode = "default" | "direct" | "proxy" | "zapret";
 type CheckStatus = "idle" | "checking" | "ok" | "error";
+
+function initialNetworkMode(proxyUrl: string | null): NetworkMode {
+  if (proxyUrl === DEFAULT_PROXY_URL) return "default";
+  if (proxyUrl === null) return "direct";
+  return "proxy";
+}
 
 function NetworkSection() {
   const proxyUrl = useSettingsStore((s) => s.proxyUrl);
   const setProxyUrl = useSettingsStore((s) => s.setProxyUrl);
-  const [mode, setMode] = useState<NetworkMode>(proxyUrl ? "proxy" : "direct");
-  const [inputValue, setInputValue] = useState(proxyUrl ?? "");
+  const [mode, setMode] = useState<NetworkMode>(() => initialNetworkMode(proxyUrl));
+  const [inputValue, setInputValue] = useState(mode === "proxy" ? (proxyUrl ?? "") : "");
   const [checkStatus, setCheckStatus] = useState<CheckStatus>("idle");
   const [checkError, setCheckError] = useState<string | null>(null);
 
@@ -354,7 +360,14 @@ function NetworkSection() {
   const handleModeChange = (nextMode: NetworkMode) => {
     setMode(nextMode);
     setCheckStatus("idle");
-    if (nextMode === "direct") {
+    if (nextMode === "default") {
+      setInputValue("");
+      setProxyUrl(DEFAULT_PROXY_URL);
+    }
+    // Zapret работает на уровне ОС для всего трафика — прокси приложения
+    // поверх него ни к чему, а если старый прокси недоступен, сломает
+    // соединение, хотя пользователь рассчитывает именно на zapret.
+    if (nextMode === "direct" || nextMode === "zapret") {
       setInputValue("");
       setProxyUrl(null);
     }
@@ -379,11 +392,12 @@ function NetworkSection() {
         <h2 className="text-sm text-text">Соединение с SoundCloud</h2>
       </div>
 
-      <div className="flex gap-1">
+      <div className="flex flex-wrap gap-1">
         {(
           [
+            { id: "default", label: "Наш прокси" },
             { id: "direct", label: "Напрямую" },
-            { id: "proxy", label: "Через прокси" },
+            { id: "proxy", label: "Свой прокси" },
             { id: "zapret", label: "Zapret" },
           ] as const
         ).map((option) => (
@@ -402,38 +416,44 @@ function NetworkSection() {
         ))}
       </div>
 
+      {mode === "default" && (
+        <p className="text-sm text-muted">
+          Приложение по умолчанию идёт к SoundCloud через наш сервер — специально для пользователей
+          из РФ, где SoundCloud заблокирован. Настройка не нужна.
+        </p>
+      )}
+
       {mode === "proxy" && (
-        <div className="flex flex-col gap-2">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(event) => setInputValue(event.target.value)}
-            onBlur={() => commitProxyUrl(inputValue)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                commitProxyUrl(inputValue);
-                event.currentTarget.blur();
-              }
-            }}
-            placeholder="socks5://127.0.0.1:1080"
-            className="w-full border border-hairline bg-bg px-3 py-2 text-sm text-text placeholder:text-muted/60 outline-none focus:border-accent"
-          />
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleCheck}
-              disabled={checkStatus === "checking" || !proxyUrl}
-              className="w-fit border border-hairline px-3 py-1.5 text-sm text-muted hover:border-accent hover:text-text disabled:opacity-40"
-            >
-              {checkStatus === "checking" ? "Проверяем…" : "Проверить соединение"}
-            </button>
-            {checkStatus === "ok" && (
-              <span className="text-sm text-accent">Соединение работает</span>
-            )}
-            {checkStatus === "error" && (
-              <span className="text-sm text-danger">{checkError ?? "Не удалось подключиться"}</span>
-            )}
-          </div>
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(event) => setInputValue(event.target.value)}
+          onBlur={() => commitProxyUrl(inputValue)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              commitProxyUrl(inputValue);
+              event.currentTarget.blur();
+            }
+          }}
+          placeholder="socks5://127.0.0.1:1080"
+          className="w-full border border-hairline bg-bg px-3 py-2 text-sm text-text placeholder:text-muted/60 outline-none focus:border-accent"
+        />
+      )}
+
+      {(mode === "default" || mode === "proxy") && (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleCheck}
+            disabled={checkStatus === "checking" || !proxyUrl}
+            className="w-fit border border-hairline px-3 py-1.5 text-sm text-muted hover:border-accent hover:text-text disabled:opacity-40"
+          >
+            {checkStatus === "checking" ? "Проверяем…" : "Проверить соединение"}
+          </button>
+          {checkStatus === "ok" && <span className="text-sm text-accent">Соединение работает</span>}
+          {checkStatus === "error" && (
+            <span className="text-sm text-danger">{checkError ?? "Не удалось подключиться"}</span>
+          )}
         </div>
       )}
 

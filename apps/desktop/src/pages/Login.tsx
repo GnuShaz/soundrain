@@ -14,6 +14,7 @@ const STEPS = [
 export function Login() {
   const [token, setToken] = useState("");
   const [reveal, setReveal] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -21,6 +22,10 @@ export function Login() {
     onSuccess: (user) => {
       queryClient.setQueryData(["auth-status"], { authorized: true, user });
     },
+  });
+
+  const oauthMutation = useMutation({
+    mutationFn: () => api.authStartOAuthLogin(),
   });
 
   const error = isScError(mutation.error) ? mutation.error : null;
@@ -40,60 +45,87 @@ export function Login() {
           <p className="text-sm font-medium tracking-wide text-muted">SoundRain</p>
         </div>
 
-        <ol className="mb-8 flex flex-col gap-3">
-          {STEPS.map((step, i) => (
-            <li key={step} className="flex gap-3 text-sm text-text/90">
-              <span className="mt-px shrink-0 font-mono text-xs text-accent">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <span>{step}</span>
-            </li>
-          ))}
-        </ol>
+        <button
+          type="button"
+          onClick={() => oauthMutation.mutate()}
+          disabled={oauthMutation.isPending}
+          className="w-full bg-accent py-2.5 text-sm font-medium text-bg transition-opacity hover:opacity-90 disabled:opacity-40"
+        >
+          Войти через SoundCloud
+        </button>
+        <p className="mt-2 mb-1 text-center text-sm text-muted">
+          Откроется окно входа — залогиньтесь как обычно, окно закроется само
+        </p>
+        <p className="mb-6 min-h-5 text-center text-sm text-danger">
+          {oauthMutation.isError ? "Не удалось открыть окно входа" : ""}
+        </p>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div className="relative">
-            <input
-              type={reveal ? "text" : "password"}
-              value={token}
-              onChange={(event) => setToken(event.target.value)}
-              placeholder="oauth_token"
-              // biome-ignore lint/a11y/noAutofocus: единственное поле на экране, автофокус ускоряет вставку токена
-              autoFocus
-              autoComplete="off"
-              spellCheck={false}
-              className="w-full border border-hairline bg-surface px-3 py-2.5 pr-10 font-mono text-sm text-text placeholder:text-muted/60 outline-none focus:border-accent"
-            />
-            <button
-              type="button"
-              onClick={() => setReveal((v) => !v)}
-              aria-label={reveal ? "Скрыть токен" : "Показать токен"}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-text"
-            >
-              {reveal ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
-
+        {!showManual ? (
           <button
-            type="submit"
-            disabled={mutation.isPending || token.trim().length === 0}
-            className="bg-accent py-2.5 text-sm font-medium text-bg transition-opacity hover:opacity-90 disabled:opacity-40"
+            type="button"
+            onClick={() => setShowManual(true)}
+            className="w-full text-center text-sm text-muted underline-offset-2 hover:text-text hover:underline"
           >
-            Войти
+            Ввести токен вручную
           </button>
+        ) : (
+          <>
+            <ol className="mb-8 flex flex-col gap-3">
+              {STEPS.map((step, i) => (
+                <li key={step} className="flex gap-3 text-sm text-text/90">
+                  <span className="mt-px shrink-0 font-mono text-xs text-accent">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
 
-          <div className="min-h-10 text-sm">
-            {mutation.isPending && <p className="text-muted">Проверяем токен…</p>}
-            {error?.kind === "invalidToken" && (
-              <p className="text-danger">
-                SoundCloud отклонил токен — получите новый по инструкции выше
-              </p>
-            )}
-            {error?.kind === "network" && (
-              <p className="text-danger">Нет связи с SoundCloud: {error.message}</p>
-            )}
-          </div>
-        </form>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+              <div className="relative">
+                <input
+                  type={reveal ? "text" : "password"}
+                  value={token}
+                  onChange={(event) => setToken(event.target.value)}
+                  placeholder="oauth_token"
+                  // biome-ignore lint/a11y/noAutofocus: единственное поле на экране, автофокус ускоряет вставку токена
+                  autoFocus
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="w-full border border-hairline bg-surface px-3 py-2.5 pr-10 font-mono text-sm text-text placeholder:text-muted/60 outline-none focus:border-accent"
+                />
+                <button
+                  type="button"
+                  onClick={() => setReveal((v) => !v)}
+                  aria-label={reveal ? "Скрыть токен" : "Показать токен"}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-text"
+                >
+                  {reveal ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                disabled={mutation.isPending || token.trim().length === 0}
+                className="bg-accent py-2.5 text-sm font-medium text-bg transition-opacity hover:opacity-90 disabled:opacity-40"
+              >
+                Войти
+              </button>
+
+              <div className="min-h-10 text-sm">
+                {mutation.isPending && <p className="text-muted">Проверяем токен…</p>}
+                {error?.kind === "invalidToken" && (
+                  <p className="text-danger">
+                    SoundCloud отклонил токен — получите новый по инструкции выше
+                  </p>
+                )}
+                {error?.kind === "network" && (
+                  <p className="text-danger">Нет связи с SoundCloud: {error.message}</p>
+                )}
+              </div>
+            </form>
+          </>
+        )}
       </div>
     </main>
   );

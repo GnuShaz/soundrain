@@ -107,6 +107,7 @@ export function isScError(value: unknown): value is ScError {
 export const api = {
   authStatus: () => invoke<AuthStatus>("auth_status"),
   authSetToken: (token: string) => invoke<ScUser>("auth_set_token", { token }),
+  authStartOAuthLogin: () => invoke<void>("auth_start_oauth_login"),
   authLogout: () => invoke<void>("auth_logout"),
   scStream: (cursor?: string) => invoke<TrackPage>("sc_stream", { cursor: cursor ?? null }),
   scLikes: (cursor?: string) => invoke<TrackPage>("sc_likes", { cursor: cursor ?? null }),

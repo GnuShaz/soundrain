@@ -4,11 +4,22 @@ import { api } from "../lib/api";
 
 export type DiscordMode = "track" | "artist" | "activity";
 
+/**
+ * Собственный прокси на VPS проекта, включён по умолчанию — чтобы у
+ * пользователей из РФ (SoundCloud заблокирован) всё работало без настройки.
+ * Тот же принцип, что и у Discord client_id/API-ключа бэкенда: не секрет
+ * уровня пользовательских данных, общий креденшл сервиса. Должен совпадать с
+ * `DEFAULT_PROXY_URL` в `src-tauri/src/network/mod.rs` — Rust стартует с этим
+ * же значением, так что до первой гидратации стора (мгновенно, localStorage
+ * синхронный) поведение уже консистентно.
+ */
+export const DEFAULT_PROXY_URL = "http://sr_iNlJ1RoP:HTSs4M0zRjYSaiwmuDg0snCx@31.76.20.177:18080";
+
 interface SettingsState {
   /** `null` — системное устройство по умолчанию. */
   audioDeviceId: string | null;
   setAudioDeviceId: (id: string | null) => void;
-  /** `null` — прямое соединение, без прокси. */
+  /** По умолчанию — {@link DEFAULT_PROXY_URL}, `null` — прямое соединение. */
   proxyUrl: string | null;
   setProxyUrl: (url: string | null) => void;
   /**
@@ -45,7 +56,7 @@ export const useSettingsStore = create<SettingsState>()(
         api.audioSetDevice(id).catch(() => {});
       },
 
-      proxyUrl: null,
+      proxyUrl: DEFAULT_PROXY_URL,
       setProxyUrl: (url) => {
         set({ proxyUrl: url });
         api.networkSetProxy(url).catch(() => {});
@@ -70,7 +81,11 @@ export const useSettingsStore = create<SettingsState>()(
         if (state?.audioDeviceId) {
           api.audioSetDevice(state.audioDeviceId).catch(() => {});
         }
-        if (state?.proxyUrl) {
+        // Без условия на truthy: Rust стартует с DEFAULT_PROXY_URL по
+        // умолчанию, так что явный выбор пользователя "Напрямую" (null)
+        // тоже обязательно нужно дослать — иначе Rust продолжит работать
+        // через прокси, хотя пользователь выбрал прямое соединение.
+        if (state) {
           api.networkSetProxy(state.proxyUrl).catch(() => {});
         }
         if (state?.discordEnabled) {
