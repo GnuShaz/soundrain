@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@import "@fontsource/inter-tight/400.css";
+@import "@fontsource/inter-tight/500.css";
+@import "@fontsource/inter-tight/600.css";
+@import "@fontsource/geist-mono/400.css";
+@import "@fontsource/geist-mono/500.css";
+
+/*
+ * Design tokens — "аппаратная" палитра (утверждена, см. план).
+ * Единый источник правды: ничего из этого не переопределяется точечно
+ * в компонентах. Тёплый графит вместо чёрного, костяной текст вместо
+ * белого, акцент — цвет подсветки VU-индикатора.
+ */
+:root {
+  --color-bg: #13110e;
+  --color-surface: #1c1915;
+  --color-hairline: #2b2721;
+  --color-text: #efe9dc;
+  --color-muted: #8b8375;
+  --color-accent: #e39b32;
+  --color-danger: #c0654a;
+
+  --font-sans: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-hairline: var(--color-hairline);
+  --color-text: var(--color-text);
+  --color-muted: var(--color-muted);
+  --color-accent: var(--color-accent);
+  --color-danger: var(--color-danger);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  /* --bg-image ставится/убирается из lib/background.ts при выборе/сбросе
+     фоновой картинки в настройках — по умолчанию не задан, `none`. */
+  background-color: var(--color-bg);
+  background-image: var(--bg-image, none);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+* {
+  border-color: var(--color-hairline);
+}
+
+/* Свой скроллбар вместо системного — тонкий, в палитре проекта. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-hairline) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-hairline);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted);
+}

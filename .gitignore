@@ -1,0 +1,24 @@
+node_modules/
+dist/
+dist-ssr/
+.DS_Store
+*.local
+
+# Rust
+target/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Claude Code local session state
+.claude/
+
+# Референсы для дизайна, накиданные в корень по ходу работы — не часть проекта
+/*.png

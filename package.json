@@ -1,0 +1,14 @@
+{
+  "name": "soundrain",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter desktop tauri dev",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.10"
+  },
+  "packageManager": "pnpm@11.13.0"
+}
