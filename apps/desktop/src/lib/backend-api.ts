@@ -4,7 +4,7 @@ import type { ScUser, Track } from "./api";
 // API_KEY зашит здесь же (не секрет уровня "приватный ключ пользователя" —
 // общий пароль для доступа к самому сервису, аналог того, что уже сделано
 // для Discord client_id).
-const BASE_URL = "https://soundrain-api.botyfi.online";
+const BASE_URL = "https://api.botyfi.ru";
 const API_KEY = "-lomIz12lEv8e32dpLUeEbt4PUd-fnZj1LgpTf4LH6k";
 
 export interface UserIdentity {
